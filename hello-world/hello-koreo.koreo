@@ -1,0 +1,24 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: hello-koreo
+spec:
+  crdRef:
+    apiGroup: apps
+    version: v1
+    kind: Deployment
+  steps:
+    - label: get_labels
+      ref:
+        kind: ValueFunction
+        name: get-labels
+      inputs:
+        name: =parent.metadata.name
+    - label: set_labels
+      ref:
+        kind: ResourceFunction
+        name: set-deployment-labels
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        labels: =steps.get_labels.labels

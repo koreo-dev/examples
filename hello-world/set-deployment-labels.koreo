@@ -1,0 +1,53 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: set-deployment-labels
+spec:
+  apiConfig:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: =inputs.name
+    namespace: =inputs.namespace
+    owned: false
+
+  resource:
+    metadata:
+      labels: =inputs.labels
+
+  create:
+    enabled: false
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: set-deployment-labels-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: set-deployment-labels
+
+  inputs:
+    name: test-deployment
+    namespace: default
+    labels:
+      foo: bar
+      baz: qux
+
+  currentResource:
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: test-deployment
+      namespace: default
+
+  testCases:
+    - label: Sets labels
+      expectResource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test-deployment
+          namespace: default
+          labels:
+            foo: bar
+            baz: qux

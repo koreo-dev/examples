@@ -1,0 +1,25 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: get-labels
+spec:
+  return:
+    labels:
+      hello: =inputs.name
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: get-labels-test
+spec:
+  functionRef:
+    kind: ValueFunction
+    name: get-labels
+
+  inputs:
+    name: test
+
+  testCases:
+    - expectReturn:
+        labels:
+          hello: test
