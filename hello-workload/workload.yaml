@@ -1,0 +1,9 @@
+apiVersion: example.koreo.dev/v1
+kind: Workload
+metadata:
+  name: my-app
+spec:
+  container:
+    image: nginx:latest
+    port: 80
+  environment: prod

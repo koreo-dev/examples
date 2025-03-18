@@ -1,0 +1,16 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceTemplate
+metadata:
+  name: service-template
+spec:
+  template:
+    apiVersion: v1
+    kind: Service
+    spec:
+      selector:
+        app: nginx
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 80
+      type: ClusterIP

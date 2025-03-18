@@ -1,0 +1,40 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: hello-workload
+spec:
+  crdRef:
+    apiGroup: example.koreo.dev
+    version: v1
+    kind: Workload
+
+  steps:
+    - label: create_deployment
+      ref:
+        kind: ResourceFunction
+        name: deployment-factory
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        env: =parent.spec.environment
+        image: =parent.spec.container.image
+        port: =parent.spec.container.port
+      condition:
+        type: Deployment
+        name: Workload Deployment
+        
+    - label: create_service
+      ref:
+        kind: ResourceFunction
+        name: service-factory.v2
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        env: =parent.spec.environment
+        targetPort: =parent.spec.container.port
+      condition:
+        type: Service
+        name: Workload Service
+      state:
+        service:
+          clusterIP: =value.clusterIP

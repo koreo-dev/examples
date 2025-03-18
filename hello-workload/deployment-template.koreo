@@ -1,0 +1,23 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceTemplate
+metadata:
+  name: deployment-template
+spec:
+  template:
+    apiVersion: apps/v1
+    kind: Deployment
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          containers:
+            - name: nginx
+              image: nginx:latest
+              ports:
+                - containerPort: 80

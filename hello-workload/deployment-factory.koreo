@@ -1,0 +1,146 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: deployment-factory
+spec:
+  preconditions:
+  - assert: |
+      =inputs.name.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+    skip:
+      message: "Invalid deployment name"
+
+  - assert: |
+      =inputs.env == "dev" || inputs.env == "staging" || inputs.env == "prod"
+    permFail:
+      message: "Invalid environment"
+
+  apiConfig:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: =inputs.name + "-deployment"
+    namespace: =inputs.namespace
+
+  resourceTemplateRef:
+    name: deployment-template
+
+  overlays:
+  - overlay:
+      metadata:
+        labels:
+          env: =inputs.env
+          workload: =inputs.name
+      spec:
+        selector:
+          matchLabels:
+            app: =inputs.name
+        template:
+          metadata:
+            labels:
+              app: =inputs.name
+          spec:
+            containers:
+              - name: =inputs.name
+                image: =inputs.image
+                ports:
+                  - containerPort: =inputs.port
+  - overlayRef:
+      kind: ValueFunction
+      name: get-deployment-config
+    inputs:
+      env: =inputs.env
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: deployment-factory-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: deployment-factory
+
+  inputs:
+    name: test
+    namespace: default
+    image: test-api:latest
+    port: 3000
+    env: dev
+
+  testCases:
+  - label: happy path (dev)
+    expectResource:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: test-deployment
+        namespace: default
+        labels:
+          env: dev
+          workload: test
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: test
+        template:
+          metadata:
+            labels:
+              app: test
+          spec:
+            containers:
+              - name: test
+                image: test-api:latest
+                ports:
+                  - containerPort: 3000
+
+  - label: happy path (prod)
+    variant: true
+    inputOverrides:
+      env: prod
+    expectResource:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: test-deployment
+        namespace: default
+        labels:
+          env: prod
+          workload: test
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: test
+        template:
+          metadata:
+            labels:
+              app: test
+          spec:
+            containers:
+              - name: test
+                image: test-api:latest
+                ports:
+                  - containerPort: 3000
+
+  - label: empty deployment name
+    variant: true
+    inputOverrides:
+      name: ""
+    expectOutcome:
+      skip:
+        message: "Invalid deployment name"
+
+  - label: invalid deployment name
+    variant: true
+    inputOverrides:
+      name: "-invalid-name"
+    expectOutcome:
+      skip:
+        message: "Invalid deployment name"
+
+  - label: invalid environment
+    variant: true
+    inputOverrides:
+      env: preprod
+    expectOutcome:
+      permFail:
+        message: "Invalid environment"

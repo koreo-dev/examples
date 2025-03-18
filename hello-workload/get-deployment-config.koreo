@@ -1,0 +1,36 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: get-deployment-config
+spec:
+  locals:
+    replicas: |
+      =inputs.env == "prod" ? 3 : 1
+  return:
+    spec:
+      replicas: =locals.replicas
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: get-deployment-config-test
+spec:
+  functionRef:
+    kind: ValueFunction
+    name: get-deployment-config
+
+  inputs:
+    env: dev
+
+  testCases:
+  - label: dev environment
+    expectReturn:
+      spec:
+        replicas: 1
+
+  - label: prod environment
+    inputOverrides:
+      env: prod
+    expectReturn:
+      spec:
+        replicas: 3

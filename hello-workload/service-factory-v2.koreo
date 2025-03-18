@@ -1,0 +1,94 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: service-factory.v2
+spec:
+  preconditions:
+  - assert: |
+      =inputs.name.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+    skip:
+      message: "Invalid service name"
+
+  apiConfig:
+    apiVersion: v1
+    kind: Service
+    name: =inputs.name + "-svc"
+    namespace: =inputs.namespace
+
+  resourceTemplateRef:
+    name: service-template
+
+  overlays:
+  - overlay:
+      metadata:
+        labels:
+          env: =inputs.env
+          workload: =inputs.name
+      spec:
+        selector:
+          app: =inputs.name
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: =inputs.targetPort
+
+  return:
+    clusterIP: =resource.spec.clusterIP
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: service-factory.v2-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: service-factory.v2
+
+  inputs:
+    name: hello-koreo
+    namespace: default
+    env: dev
+    targetPort: 3000
+
+  testCases:
+  - label: happy path
+    expectResource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: hello-koreo-svc
+        namespace: default
+        labels:
+          env: dev
+          workload: hello-koreo
+      spec:
+        selector:
+          app: hello-koreo
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 3000
+        type: ClusterIP
+ 
+  - label: happy path return value
+    overlayResource:
+      spec:
+        clusterIP: 34.118.232.84
+    expectReturn:
+      clusterIP: 34.118.232.84
+      
+  - label: empty service name
+    variant: true
+    inputOverrides:
+      name: ""
+    expectOutcome:
+      skip:
+        message: "Invalid service name"
+
+  - label: invalid service name
+    variant: true
+    inputOverrides:
+      name: "-invalid-name"
+    expectOutcome:
+      skip:
+        message: "Invalid service name"
