@@ -1,0 +1,36 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: hello-lambda-workload
+  namespace: koreo-examples
+spec:
+  crdRef:
+    apiGroup: example.koreo.dev
+    version: v1
+    kind: LambdaWorkload
+
+  steps:
+    - label: calculate_bucket_name
+      ref:
+        kind: ValueFunction
+        name: calculate-bucket-name
+      inputs:
+        uid: =parent.metadata.uid
+        bucketName: =parent.spec.bucketName
+        generateSuffix: =parent.spec.generateBucketSuffix
+        maybeBucketName: |
+          =has(parent.status.state.bucket.bucketName) ? parent.status.state.bucket.bucketName : ""
+      state:
+        bucketName: =value.name
+      
+    - label: bucket
+      ref:
+        kind: ResourceFunction
+        name: bucket-factory
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        bucketName: =steps.calculate_bucket_name.name
+      condition:
+        type: Bucket 
+        name: Workload Bucket

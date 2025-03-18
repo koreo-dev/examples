@@ -1,0 +1,64 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: bucket-factory
+  namespace: koreo-examples
+spec:
+  preconditions:
+  - assert: |
+      =inputs.name.matches("^(?!.*\.\.)[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")
+    skip:
+      message: "Invalid bucket name"
+
+  apiConfig:
+    apiVersion: s3.services.k8s.aws/v1alpha1
+    kind: Bucket
+    name: =inputs.name + "-bucket"
+    namespace: =inputs.namespace
+
+  resource:
+    spec:
+      name: =inputs.bucketName
+
+  postconditions:
+    - assert: =has(resource.status.ackResourceMetadata.arn)
+      retry:
+        message: Bucket is waiting to become ready
+        delay: 5
+  
+  return:
+    arn: =resource.status.ackResourceMetadata.arn
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: bucket-factory-test
+  namespace: koreo-examples
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: bucket-factory
+
+  inputs:
+    name: test
+    bucketName: test-bucket-asdfasdf
+    namespace: default
+
+  testCases:
+  - label: ok
+    expectResource:
+      apiVersion: s3.services.k8s.aws/v1alpha1
+      kind: Bucket
+      metadata:
+        name: test-bucket
+        namespace: default
+      spec:
+        name: test-bucket-asdfasdf
+
+  - label: ok-return
+    overlayResource:
+      status:
+        ackResourceMetadata:
+          arn: arn:aws:ecs:us-east-1:1234567890:bucket
+    expectReturn:
+      arn: arn:aws:ecs:us-east-1:1234567890:bucket

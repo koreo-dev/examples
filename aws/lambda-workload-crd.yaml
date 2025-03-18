@@ -1,0 +1,40 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: lambdaworkloads.example.koreo.dev
+spec:
+  group: example.koreo.dev
+  names:
+    kind: LambdaWorkload
+    listKind: LambdaWorkloadList
+    plural: lambdaworkloads
+    singular: lambdaworkload
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                image:
+                  type: string
+                bucketName:
+                  type: string
+                role:
+                  type: string
+                  default: writer
+                  enum:
+                    - reader
+                    - writer
+                generateBucketSuffix:
+                  type: boolean
+                  default: true
+              required: ["image"]
+            status:
+              x-kubernetes-preserve-unknown-fields: true
+              type: object

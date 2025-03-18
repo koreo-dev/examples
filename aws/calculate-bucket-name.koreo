@@ -1,0 +1,46 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: calculate-bucket-name
+  namespace: koreo-examples
+spec:
+  locals:
+    name: |
+      =inputs.generateSuffix ? (inputs.bucketName + "-" + inputs.uid.split_last("-")) : inputs.bucketName
+    
+  return:
+    name: |
+      =has(inputs.maybeBucketName) && inputs.maybeBucketName != "" ? inputs.maybeBucketName : locals.name
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: calculate-bucket-name-test
+  namespace: koreo-examples
+spec:
+  functionRef:
+    kind: ValueFunction
+    name: calculate-bucket-name
+
+  inputs:
+    uid: "a57c1354-9346-42c6-a924-ba307e086138"
+    maybeBucketName: ""
+    generateSuffix: true
+    bucketName: "non-unique-name"
+
+  testCases:
+  - label: generate-suffix
+    expectReturn:
+      name: "non-unique-name-ba307e086138"
+
+  - label: no-suffix
+    inputOverrides:
+      generateSuffix: false
+    expectReturn:
+      name: "non-unique-name"
+
+  - label: use-maybe-name
+    inputOverrides:
+      maybeBucketName: "already-generated-name"
+    expectReturn:
+      name: "already-generated-name"

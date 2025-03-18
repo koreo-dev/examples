@@ -1,0 +1,10 @@
+apiVersion: example.koreo.dev/v1
+kind: LambdaWorkload
+metadata:
+  name: my-lambda-workload
+  namespace: koreo-examples
+spec:
+  image: public.ecr.aws/lambda/python:3.9
+  role: writer
+  bucketName: my-unique-bucket-name
+  generateBucketSuffix: true
