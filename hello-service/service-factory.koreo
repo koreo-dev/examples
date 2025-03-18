@@ -1,0 +1,89 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: service-factory
+spec:
+  preconditions:
+  - assert: |
+      =inputs.name.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+    skip:
+      message: "Invalid service name"
+
+  - assert: =inputs.selector.size() > 0
+    skip:
+      message: "No selector"
+
+  locals:
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: =inputs.targetPort
+
+  apiConfig:
+    apiVersion: v1
+    kind: Service
+    name: =inputs.name
+    namespace: =inputs.namespace
+
+  resource:
+    spec:
+      selector: =inputs.selector
+      ports: =locals.ports
+      type: ClusterIP
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: service-factory-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: service-factory
+
+  inputs:
+    name: hello-koreo
+    namespace: default
+    selector:
+      app: nginx
+    targetPort: 80
+
+  testCases:
+  - label: happy path
+    expectResource:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: hello-koreo
+        namespace: default
+      spec:
+        selector:
+          app: nginx
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 80
+        type: ClusterIP
+
+  - label: empty service name
+    variant: true
+    inputOverrides:
+      name: ""
+    expectOutcome:
+      skip:
+        message: "Invalid service name"
+
+  - label: invalid service name
+    variant: true
+    inputOverrides:
+      name: "-invalid-name"
+    expectOutcome:
+      skip:
+        message: "Invalid service name"
+
+  - label: no selector
+    variant: true
+    inputOverrides:
+      selector:
+    expectOutcome:
+      skip:
+        message: "No selector"

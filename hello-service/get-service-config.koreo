@@ -1,0 +1,99 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: get-service-config
+spec:
+  preconditions:
+  - assert: =has(inputs.metadata.labels.service)
+    skip:
+      message: Deployment does not have service label
+
+  - assert: |
+      =has(inputs.spec.selector.matchLabels) &&
+        inputs.spec.selector.matchLabels.size() > 0
+    skip:
+      message: Deployment does not have selector.matchLabels
+
+  - assert: =has(inputs.spec.template.spec.containers[0].ports[0].containerPort)
+    skip:
+      message: Deployment does not have containerPort
+
+  return:
+    name: =inputs.metadata.labels.service
+    namespace: =inputs.metadata.namespace
+    selector: =inputs.spec.selector.matchLabels
+    targetPort: =inputs.spec.template.spec.containers[0].ports[0].containerPort
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: get-service-config-test
+spec:
+  functionRef:
+    kind: ValueFunction
+    name: get-service-config
+
+  inputs:
+    metadata:
+      namespace: default
+      labels:
+        service: hello-koreo
+    spec:
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        spec:
+          containers:
+            - name: nginx
+              image: nginx:latest
+              ports:
+                - containerPort: 80
+  
+  testCases:
+  - label: happy path
+    expectReturn:
+      name: hello-koreo
+      namespace: default
+      selector:
+        app: nginx
+      targetPort: 80
+
+  - label: service label not present
+    variant: true
+    inputOverrides:
+      metadata:
+        labels:
+    expectOutcome:
+      skip:
+        message: Deployment does not have service label
+
+  - label: selector matchLabels not present
+    variant: true
+    inputOverrides:
+      spec:
+        selector:
+    expectOutcome:
+      skip:
+        message: Deployment does not have selector.matchLabels
+
+  - label: selector matchLabels empty
+    variant: true
+    inputOverrides:
+      spec:
+        selector:
+          matchLabels:
+    expectOutcome:
+      skip:
+        message: Deployment does not have selector.matchLabels
+
+  - label: containerPort not present
+    variant: true
+    inputOverrides:
+      spec:
+        template:
+          spec:
+            containers:
+    expectOutcome:
+      skip:
+        message: Deployment does not have containerPort

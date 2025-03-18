@@ -1,0 +1,29 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: hello-service
+spec:
+  crdRef:
+    apiGroup: apps
+    version: v1
+    kind: Deployment
+
+  steps:
+    - label: get_service_config
+      skipIf: =!has(parent.metadata.labels)
+      ref:
+        kind: ValueFunction
+        name: get-service-config
+      inputs:
+        metadata: =parent.metadata
+        spec: =parent.spec
+        
+    - label: create_service
+      ref:
+        kind: ResourceFunction
+        name: service-factory
+      inputs:
+        name: =steps.get_service_config.name
+        namespace: =steps.get_service_config.namespace
+        selector: =steps.get_service_config.selector
+        targetPort: =steps.get_service_config.targetPort
