@@ -1,0 +1,77 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: lambda-role
+spec:
+  apiConfig:
+    apiVersion: iam.services.k8s.aws/v1alpha1
+    kind: Role
+    name: =inputs.name
+    namespace: =inputs.namespace
+
+  resource:
+    spec:
+      policyRefs:
+        - from:
+            name: =inputs.policyName
+      name: =inputs.name
+      assumeRolePolicyDocument: |
+        =to_json({
+          "Version":"2012-10-17",
+          "Statement": [{
+            "Effect":"Allow",
+            "Principal": {
+              "Service": [
+                "lambda.amazonaws.com"
+              ]
+            },
+            "Action": ["sts:AssumeRole"]
+          }]
+        })
+
+  postconditions:
+    - assert: =has(resource.status.ackResourceMetadata.arn)
+      retry:
+        message: Waiting for lambda role to become healthy
+        delay: 5
+
+  return:
+    name: =inputs.name
+    arn: =resource.status.ackResourceMetadata.arn
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: lambda-role-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: lambda-role
+  inputs:
+    name: test-role
+    namespace: test-namespace
+    policyName: test-policy
+
+  testCases:
+    - label: ok
+      expectResource:
+        apiVersion: iam.services.k8s.aws/v1alpha1
+        kind: Role
+        metadata:
+          name: test-role
+          namespace: test-namespace
+        spec:
+          assumeRolePolicyDocument: '{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": ["lambda.amazonaws.com"]}, "Action": ["sts:AssumeRole"]}]}'
+          name: test-role
+          policyRefs:
+          - from:
+              name: test-policy
+    - label: ok-return
+      overlayResource:
+        status:
+          ackResourceMetadata:
+            arn: this-is-an-arn
+      expectReturn:
+        arn: this-is-an-arn
+        name: test-role

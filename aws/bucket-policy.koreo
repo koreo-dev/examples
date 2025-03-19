@@ -1,0 +1,96 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: bucket-policy
+  namespace: koreo-examples
+spec: 
+  locals:
+    policy_statement:
+      - Effect: Allow
+        Resource: "*"
+        Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      - Effect: "Allow"
+        Resource:
+        - =inputs.bucketArn
+        - =inputs.bucketArn + "/*"
+        Action: |
+          =!has(inputs.role) || inputs.role == "writer" ?
+            ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"] :
+            ["s3:ListBucket", "s3:GetObject"]
+
+  apiConfig:
+    apiVersion: iam.services.k8s.aws/v1alpha1
+    kind: Policy
+    plural: policies
+    name: =inputs.name
+    namespace: =inputs.namespace
+
+  resource:
+    spec:
+      name: =inputs.name
+      policyDocument: |
+        =to_json({"Version":"2012-10-17", "Statement": locals.policy_statement})
+      x-koreo-compare-last-applied: [policyDocument]
+
+  postconditions:
+    - assert: =has(resource.status.policyID)
+      retry:
+        message: Waiting for Policy ID
+        delay: 15
+
+  return:
+    name: =inputs.name
+    policyId: =resource.status.policyID
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: bucket-policy-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: bucket-policy
+
+  inputs:
+    bucketArn: arn:aws:s3:us-east-1:1234567890:bucket/my-bucket
+    namespace: test-namespace
+    name: test-policy
+    role: writer
+
+  testCases:
+    - label: writer
+      expectResource:
+        apiVersion: iam.services.k8s.aws/v1alpha1
+        kind: Policy
+        metadata:
+          name: test-policy
+          namespace: test-namespace
+        spec:
+          name: test-policy
+          policyDocument: '{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Resource": "*", "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]}, {"Effect": "Allow", "Resource": ["arn:aws:s3:us-east-1:1234567890:bucket/my-bucket", "arn:aws:s3:us-east-1:1234567890:bucket/my-bucket/*"], "Action": ["s3:ListBucket", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"]}]}'
+    - label: reader
+      variant: true
+      inputOverrides:
+        role: reader
+      expectResource:
+        apiVersion: iam.services.k8s.aws/v1alpha1
+        kind: Policy
+        metadata:
+          name: test-policy
+          namespace: test-namespace
+        spec:
+          name: test-policy
+          policyDocument: '{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Resource": "*", "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]}, {"Effect": "Allow", "Resource": ["arn:aws:s3:us-east-1:1234567890:bucket/my-bucket", "arn:aws:s3:us-east-1:1234567890:bucket/my-bucket/*"], "Action": ["s3:ListBucket", "s3:GetObject"]}]}'
+    - label: ok-return
+      inputOverrides:
+        name: test-policy
+      overlayResource:
+        status:
+          policyID: test-policy-id
+      expectReturn:
+        policyId: test-policy-id
+        name: test-policy

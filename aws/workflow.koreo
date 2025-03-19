@@ -10,7 +10,7 @@ spec:
     kind: LambdaWorkload
 
   steps:
-    - label: calculate_bucket_name
+    - label: calculateBucketName
       ref:
         kind: ValueFunction
         name: calculate-bucket-name
@@ -30,7 +30,37 @@ spec:
       inputs:
         name: =parent.metadata.name
         namespace: =parent.metadata.namespace
-        bucketName: =steps.calculate_bucket_name.name
+        bucketName: =steps.calculateBucketName.name
       condition:
         type: Bucket 
         name: Workload Bucket
+
+    - label: bucketPolicy
+      ref:
+        kind: ResourceFunction
+        name: bucket-policy
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        role: =parent.spec.role
+        bucketArn: =steps.bucket.arn
+      condition:
+        type: Policy
+        name: Workload Bucket Policy
+  
+    - label: lambdaRole
+      ref:
+        kind: ResourceFunction
+        name: lambda-role
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        policyName: =steps.bucketPolicy
+      condition:
+        type: Role 
+        name: Workload Lambda Execution Role 
+        
+    - label: lambda
+      ref:
+        kind: ResourceFunction
+        name: 
