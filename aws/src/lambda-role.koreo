@@ -3,6 +3,7 @@ apiVersion: koreo.dev/v1beta1
 kind: ResourceFunction
 metadata:
   name: lambda-role
+  namespace: koreo-examples
 spec:
   apiConfig:
     apiVersion: iam.services.k8s.aws/v1alpha1
@@ -39,6 +40,7 @@ spec:
   return:
     name: =inputs.name
     arn: =resource.status.ackResourceMetadata.arn
+    accountId: =string(resource.status.ackResourceMetadata.ownerAccountID)
 ---
 apiVersion: koreo.dev/v1beta1
 kind: FunctionTest
@@ -72,6 +74,8 @@ spec:
         status:
           ackResourceMetadata:
             arn: this-is-an-arn
+            ownerAccountID: "23412341234"
       expectReturn:
         arn: this-is-an-arn
         name: test-role
+        accountId: "23412341234"

@@ -34,7 +34,7 @@ spec:
                 generateBucketSuffix:
                   type: boolean
                   default: true
-              required: ["image"]
+              required: ["image", "bucketName"]
             status:
               x-kubernetes-preserve-unknown-fields: true
               type: object

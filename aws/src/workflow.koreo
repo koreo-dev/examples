@@ -55,7 +55,7 @@ spec:
       inputs:
         name: =parent.metadata.name
         namespace: =parent.metadata.namespace
-        policyName: =steps.bucketPolicy
+        policyName: =steps.bucketPolicy.name
       condition:
         type: Role 
         name: Workload Lambda Execution Role 
@@ -63,4 +63,14 @@ spec:
     - label: lambda
       ref:
         kind: ResourceFunction
-        name: 
+        name: lambda
+      inputs:
+        name: =parent.metadata.name
+        namespace: =parent.metadata.namespace
+        image: =parent.spec.image
+        roleArn: =steps.lambdaRole.arn
+        accountId: =steps.lambdaRole.accountId
+        bucketName: =steps.calculateBucketName.name
+      condition:
+        type: Lambda
+        name: Workload Lambda

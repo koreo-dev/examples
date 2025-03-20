@@ -1,0 +1,75 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: lambda
+  namespace: koreo-examples
+spec:
+  apiConfig:
+    apiVersion: lambda.services.k8s.aws/v1alpha1
+    kind: Function
+    name: =inputs.name
+    namespace: =inputs.namespace
+
+  resource:
+    spec:
+      name: =inputs.name
+      packageType: Image
+      role: =inputs.roleArn
+      environment:
+        variables:
+          BUCKET_NAME: =inputs.bucketName
+      code:
+        imageURI: =inputs.accountId + ".dkr.ecr.us-east-1.amazonaws.com/" + inputs.image
+
+  postconditions:
+    - assert: =has(resource.status.ackResourceMetadata.arn)
+      retry:
+        message: Waiting for Lambda to be created
+        delay: 5
+
+  return:
+    arn: =resource.status.ackResourceMetadata.arn
+    name: =inputs.name
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: lambda-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: lambda
+  inputs:
+    accountId: '789078907890798'
+    bucketName: bucket-name
+    image: my-lambda-function:latest
+    name: test-name
+    namespace: test-namespace
+    roleArn: test-role-arn
+
+  testCases:
+    - label: ok
+      expectResource:
+        apiVersion: lambda.services.k8s.aws/v1alpha1
+        kind: Function
+        metadata:
+          name: test-name
+          namespace: test-namespace
+        spec:
+          name: test-name
+          packageType: Image
+          role: test-role-arn
+          environment:
+            variables:
+              BUCKET_NAME: bucket-name
+          code:
+            imageURI: 789078907890798.dkr.ecr.us-east-1.amazonaws.com/my-lambda-function:latest
+    - label: ok-return
+      overlayResource:
+        status:
+          ackResourceMetadata:
+            arn: this-is-an-arn
+      expectReturn:
+        arn: this-is-an-arn
+        name: test-name

@@ -1,0 +1,28 @@
+controller:
+  image:
+    # repository: us-central1-docker.pkg.dev/konfig-platform-dev/konfig/koreo-controller
+    repository: us-central1-docker.pkg.dev/konfig-platform-dev/konfig/koreo-core
+    tag: latest
+  rbac:
+    namespace:
+      read_write:
+        lambda.services.k8s.aws:
+          - "*"
+        iam.services.k8s.aws:
+          - "*"
+        s3.services.k8s.aws:
+          - "*"
+        example.koreo.dev:
+          - "*"
+ui:
+  rbac:
+    cluster:
+      read_only:
+        lambda.services.k8s.aws:
+          - "*"
+        iam.services.k8s.aws:
+          - "*"
+        s3.services.k8s.aws:
+          - "*"
+        example.koreo.dev:
+          - "*"
