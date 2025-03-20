@@ -1,0 +1,11 @@
+apiVersion: koreo.dev/v1beta1
+kind: TriggerDummy
+metadata:
+  name: test-dummy
+  namespace: koreo-demo
+spec:
+  name: test-dummy
+  resources:
+    - apiGroup: v1
+      kind: Secret
+      name: contact-list-api-key
