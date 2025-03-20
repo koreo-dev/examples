@@ -1,4 +1,4 @@
-# AWS - S3 Invoker Lambda
+# Lambda Workload
 
 In this example, we will create a workflow that will take as an input, a simple KRM object that will
 ultimately create a S3 bucket. Next, a policy will be created that has the ability to read or write 
