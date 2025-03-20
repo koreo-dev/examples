@@ -5,7 +5,8 @@ ultimately create a S3 bucket. Next, a policy will be created that has the abili
 to that specific bucket. Then a lambda execution role that can use said policy will be created and
 attached to a lambda function. The image has the ability to write the event payload to a json file 
 in the new bucket. So at the end we can test our work by invoking the lambda and checking for new
-objects in our bucket. 
+objects in our bucket. This example uses [ACK](https://aws-controllers-k8s.github.io/community/docs/community/overview/)
+for provisioning AWS resources.
 
 # Prerequisites
 
