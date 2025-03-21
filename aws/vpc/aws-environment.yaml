@@ -7,12 +7,6 @@ metadata:
     acme.example.com/product-line: acme-widgets
     acme.example.com/domain: acme-domain
 spec:
-  description: "description"
-  autoScalingGroup:
-    ami: ami-0ad089d873abe31c4
-    instanceType: t2.micro
-    minReplicas: 1
-    maxReplicas: 3
   vpc:
     publicSubnets:
       - cidrBlock: 10.0.128.0/20
