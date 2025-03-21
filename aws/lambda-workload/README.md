@@ -1,6 +1,14 @@
 # Lambda Workload
 
-In this example, we will create a workflow that provisions four key AWS resources in sequence. First, we define a simple KRM object to create an S3 bucket. Next, we generate a policy that grants read and write access to that specific bucket. Third, we create a Lambda execution role that can assume this policy. Finally, we attach the role to a Lambda function, which writes event payloads as JSON files to the bucket. To validate our setup, we invoke the Lambda function and check for new objects in the bucket. This example uses ACK to provision AWS resources. This example uses [ACK](https://aws-controllers-k8s.github.io/community/docs/community/overview/) for provisioning AWS resources.
+In this example, we will create a Workflow that provisions four key AWS
+resources in sequence. First, we define a simple KRM object to create an S3
+bucket. Next, we generate a policy that grants read and write access to that
+specific bucket. Third, we create a Lambda execution role that can assume this
+policy. Finally, we attach the role to a Lambda function, which writes event
+payloads as JSON files to the bucket. To validate our setup, we invoke the
+Lambda function and check for new objects in the bucket. This example uses
+[ACK](https://aws-controllers-k8s.github.io/community/docs/community/overview/)
+for provisioning AWS resources.
 
 # Prerequisites
 
