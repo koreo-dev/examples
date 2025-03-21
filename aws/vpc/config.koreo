@@ -1,0 +1,63 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: aws-environment-config
+spec:
+  return:
+    environment: =inputs.metadata.name
+    environment_namespace: =inputs.metadata.namespace
+    business_unit: |
+      =has(inputs.metadata.labels['acme.example.com/business-unit']) ?
+        inputs.metadata.labels['acme.example.com/business-unit'] : ""
+    product_line: |
+      =has(inputs.metadata.labels['acme.example.com/product-line']) ?
+        inputs.metadata.labels['acme.example.com/product-line'] : ""
+    domain: |
+      =has(inputs.metadata.labels['acme.example.com/domain']) ?
+        inputs.metadata.labels['acme.example.com/domain'] : ""
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: aws-environment-config-test
+spec:
+  functionRef:
+    name: aws-environment-config
+    kind: ValueFunction
+  inputs:
+    metadata:
+      name: test-aws-environment
+      namespace: test-namespace
+      labels:
+        acme.example.com/domain: domain
+        acme.example.com/business-unit: acme-bu
+        acme.example.com/product-line: acme-widgets
+
+  testCases:
+   - expectReturn:
+       business_unit: acme-bu
+       product_line: acme-widgets
+       domain: 'domain'
+       environment_namespace: test-namespace
+       environment: test-aws-environment
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: aws-environment-config-test-partial
+spec:
+  functionRef:
+    name: aws-environment-config
+    kind: ValueFunction
+  inputs:
+    metadata:
+      name: test-aws-environment
+      namespace: test-namespace
+
+  testCases:
+    - expectReturn:
+        business_unit: ''
+        product_line: ''
+        domain: ''
+        environment_namespace: test-namespace
+        environment: test-aws-environment

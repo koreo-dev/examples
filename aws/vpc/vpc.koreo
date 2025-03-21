@@ -1,0 +1,72 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: aws-environment-vpc
+spec:
+  apiConfig:
+    apiVersion: ec2.services.k8s.aws/v1alpha1
+    kind: VPC
+    name: =inputs.metadata.name
+    namespace: =inputs.metadata.namespace
+
+  resource:
+    metadata: =inputs.metadata
+    spec:
+      enableDNSHostnames: true
+      enableDNSSupport: true
+      cidrBlocks:
+        - 10.0.0.0/16
+      tags: =inputs.resource_tags.tags
+
+  postconditions:
+    - assert: =has(resource.status.vpcID)
+      retry:
+        message: Waiting for vpc to become healthy
+        delay: 5
+
+  return:
+    name: =inputs.metadata.name
+    vpc_id: =resource.status.vpcID
+    vpc_account_id: =resource.status.ownerID
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: aws-environment-vpc-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: aws-environment-vpc
+
+  inputs:
+    metadata:
+      name: test
+      namespace: test-namespace
+    resource_tags:
+      tags:
+        - key: test
+          value: value
+
+  testCases:
+    - expectResource:
+        apiVersion: ec2.services.k8s.aws/v1alpha1
+        kind: VPC
+        metadata:
+          name: test
+          namespace: test-namespace
+        spec:
+          cidrBlocks:
+          - 10.0.0.0/16
+          enableDNSHostnames: true
+          enableDNSSupport: true
+          tags:
+          - key: test
+            value: value
+    - overlayResource:
+        status:
+          vpcID: 123213323
+          ownerID: 213412341
+      expectReturn:
+          name: test
+          vpc_account_id: 213412341
+          vpc_id: 123213323

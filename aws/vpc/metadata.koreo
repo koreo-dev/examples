@@ -1,0 +1,34 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: aws-environment-metadata
+spec:
+  return:
+    name: =inputs.config.environment
+    namespace: =inputs.config.environment_namespace
+    labels:
+      app.kubernetes.io/managed-by: koreo
+      acme.example.com/domain: =inputs.config.app_domain_name
+      acme.example.com/environment: =inputs.config.environment
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: aws-environment-metadata-test
+spec:
+  functionRef:
+    name: aws-environment-metadata
+    kind: ValueFunction
+  inputs:
+    config:
+      environment: acme-test
+      environment_namespace: acme-ns
+      app_domain_name: test-domain
+  testCases:
+    - expectReturn:
+        labels:
+          app.kubernetes.io/managed-by: koreo
+          acme.example.com/domain: test-domain
+          acme.example.com/environment: acme-test
+        name: acme-test
+        namespace: acme-ns

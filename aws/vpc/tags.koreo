@@ -1,0 +1,42 @@
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: aws-environment-tags
+spec:
+  return:
+    tags:
+      - key: business-unit
+        value: =inputs.config.business_unit
+      - key: product-line
+        value: =inputs.config.product_line
+      - key: domain
+        value: =inputs.config.domain
+      - key: environment
+        value: =inputs.config.environment
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: aws-environment-tags-test
+spec:
+  functionRef:
+    name: aws-environment-tags
+    kind: ValueFunction
+  inputs:
+    config:
+      environment: acme-test
+      environment_namespace: acme-ns
+      business_unit: acme-bu
+      product_line: acme-widgets
+      domain: test-domain
+  testCases:
+    - expectReturn:
+        tags:
+        - key: business-unit
+          value: acme-bu
+        - key: product-line
+          value: acme-widgets
+        - key: domain
+          value: test-domain
+        - key: environment
+          value: acme-test

@@ -1,0 +1,83 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: aws-environment
+spec:
+  crdRef:
+    apiGroup: acme.example.com
+    version: v1beta1
+    kind: AwsEnvironment
+  steps:
+    - label: config
+      ref:
+        name: aws-environment-config
+        kind: ValueFunction
+      inputs:
+        metadata: =parent.metadata
+
+    - label: metadata
+      ref:
+        name: aws-environment-metadata
+        kind: ValueFunction
+      inputs:
+        config: =steps.config
+
+    - label: resource_tags
+      ref:
+        name: aws-environment-tags
+        kind: ValueFunction
+      inputs:
+        config: =steps.config
+
+    - label: vpc
+      ref:
+        name: aws-environment-vpc
+        kind: ResourceFunction
+      inputs:
+        metadata: =steps.metadata
+        resource_tags: =steps.resource_tags
+      condition:
+        type: VPC
+        name: Environment VPC
+
+    - label: internet_gateway
+      ref:
+        name: aws-environment-internet-gateway
+        kind: ResourceFunction
+      inputs:
+        metadata: =steps.metadata
+        resource_tags: =steps.resource_tags
+        vpc: =steps.vpc
+      condition:
+        type: InternetGateway
+        name: Environment Internet Gateway
+
+    - label: public_route_table
+      ref:
+        name: aws-environment-public-route-table
+        kind: ResourceFunction
+      inputs:
+        metadata: =steps.metadata
+        resource_tags: =steps.resource_tags
+        vpc: =steps.vpc
+        internet_gateway: =steps.internet_gateway
+      condition:
+        type: RouteTable
+        name: Environment Public Route Table
+
+    - label: public_subnets
+      ref:
+        name: aws-environment-public-subnet
+        kind: ResourceFunction
+      forEach:
+        itemIn: =parent.spec.vpc.publicSubnets
+        inputKey: subnet
+      inputs:
+        metadata: =steps.metadata
+        resource_tags: =steps.resource_tags
+        subnet: =parent.spec.vpc.publicSubnets
+        public_route_table: =steps.public_route_table
+        vpc: =steps.vpc
+      condition:
+        type: PublicSubnet
+        name: Environment Public Subnet

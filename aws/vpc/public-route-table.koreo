@@ -1,0 +1,87 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: aws-environment-public-route-table
+spec:
+  locals:
+    metadata: |
+      =inputs.metadata.overlay({"name": inputs.metadata.name + "-public"})
+  apiConfig:
+    apiVersion: ec2.services.k8s.aws/v1alpha1
+    kind: RouteTable
+    name: =locals.metadata.name
+    namespace: =locals.metadata.namespace
+
+  resource:
+    metadata: =locals.metadata
+    spec:
+      vpcRef:
+        from:
+          name: =inputs.vpc.name
+      tags: =inputs.resource_tags.tags
+      routes:
+        - destinationCIDRBlock: 0.0.0.0/0
+          gatewayRef:
+            from:
+              name: =inputs.internet_gateway.name
+
+  create:
+    delay: 1
+
+  postconditions:
+    - assert: =has(resource.status.routeTableID)
+      retry:
+        message: Waiting for route table to become healthy
+        delay: 5
+
+  return:
+    name: =locals.metadata.name
+    route_table_id: =resource.status.routeTableID
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: aws-environment-public-route-table-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: aws-environment-public-route-table
+
+  inputs:
+    internet_gateway:
+      name: internet_gateway
+    vpc:
+      name: vpc
+    metadata:
+      name: test
+      namespace: test-namespace
+    resource_tags:
+      tags:
+      - key: test
+        value: value
+
+  testCases:
+    - expectResource:
+        apiVersion: ec2.services.k8s.aws/v1alpha1
+        kind: RouteTable
+        metadata:
+          name: test-public
+          namespace: test-namespace
+        spec:
+          routes:
+          - destinationCIDRBlock: 0.0.0.0/0
+            gatewayRef:
+              from:
+                name: internet_gateway
+          tags:
+          - key: test
+            value: value
+          vpcRef:
+            from:
+              name: vpc
+    - overlayResource:
+        status:
+          routeTableID: rt-12341234
+      expectReturn:
+        route_table_id: rt-12341234
+        name: test-public
