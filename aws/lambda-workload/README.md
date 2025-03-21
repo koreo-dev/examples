@@ -1,12 +1,6 @@
 # Lambda Workload
 
-In this example, we will create a workflow that will take as an input, a simple KRM object that will
-ultimately create a S3 bucket. Next, a policy will be created that has the ability to read or write 
-to that specific bucket. Then a lambda execution role that can use said policy will be created and
-attached to a lambda function. The image has the ability to write the event payload to a json file 
-in the new bucket. So at the end we can test our work by invoking the lambda and checking for new
-objects in our bucket. This example uses [ACK](https://aws-controllers-k8s.github.io/community/docs/community/overview/)
-for provisioning AWS resources.
+In this example, we will create a workflow that provisions four key AWS resources in sequence. First, we define a simple KRM object to create an S3 bucket. Next, we generate a policy that grants read and write access to that specific bucket. Third, we create a Lambda execution role that can assume this policy. Finally, we attach the role to a Lambda function, which writes event payloads as JSON files to the bucket. To validate our setup, we invoke the Lambda function and check for new objects in the bucket. This example uses ACK to provision AWS resources. This example uses [ACK](https://aws-controllers-k8s.github.io/community/docs/community/overview/) for provisioning AWS resources.
 
 # Prerequisites
 
@@ -56,7 +50,7 @@ kubectl apply -f ./src/crds/lambda-workload.yaml
 6. Install our Koreo Functions and Workflow
 
 ``` sh
-./scripts/install-koreo.sh
+./scripts/install-koreo.sh ./src
 ```
 
 7. Trigger the workflow

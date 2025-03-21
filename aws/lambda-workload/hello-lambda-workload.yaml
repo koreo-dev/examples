@@ -4,7 +4,7 @@ metadata:
   name: hello-lambda-workload
   namespace: koreo-examples
 spec:
-  image: my-lambda-image:0.0.2
+  image: my-lambda-image:latest
   role: writer
   bucketName: my-unique-bucket-name
   generateBucketSuffix: true

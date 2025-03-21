@@ -1,8 +1,4 @@
 controller:
-  image:
-    # repository: us-central1-docker.pkg.dev/konfig-platform-dev/konfig/koreo-controller
-    repository: us-central1-docker.pkg.dev/konfig-platform-dev/konfig/koreo-core
-    tag: latest
   rbac:
     namespace:
       read_write:
