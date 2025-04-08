@@ -1,0 +1,51 @@
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: gcp-environment-network
+spec:
+  apiConfig:
+    apiVersion: compute.cnrm.cloud.google.com/v1beta1
+    kind: ComputeNetwork
+    name: =inputs.metadata.name
+    namespace: =inputs.metadata.namespace
+
+  resource:
+    spec:
+      autoCreateSubnetworks: false
+      enableUlaInternalIpv6: false
+      routingMode: REGIONAL
+
+  postconditions:
+    - assert: =resource.config_connect_ready()
+      retry:
+        delay: 10
+        message: Waiting for compute network to be created
+
+  return:
+    name: =inputs.metadata.name
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: gcp-environment-network-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: gcp-environment-network
+
+  inputs:
+    metadata:
+      name: test-network
+      namespace: test-namespace
+
+  testCases:
+  - expectResource:
+      apiVersion: compute.cnrm.cloud.google.com/v1beta1
+      kind: ComputeNetwork
+      metadata:
+        name: test-network
+        namespace: test-namespace
+      spec:
+        autoCreateSubnetworks: false
+        enableUlaInternalIpv6: false
+        routingMode: REGIONAL
