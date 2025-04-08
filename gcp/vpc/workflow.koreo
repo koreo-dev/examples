@@ -1,0 +1,48 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: gcp-environment
+spec:
+  crdRef:
+    apiGroup: acme.example.com
+    kind: GcpEnvironment
+    version: v1beta1
+
+  steps:
+    - label: config
+      ref:
+        kind: ValueFunction
+        name: gcp-environment-config
+      inputs:
+        parent: =parent
+      state:
+        projectId: =value.projectId
+
+    - label: network
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-network
+      inputs:
+        metadata: =steps.config
+      state:
+        networkName: =value.name
+
+    - label: subnet
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-subnet
+      inputs:
+        metadata: =steps.config
+        networkName: =steps.network.name
+        range: 10.10.0.0/16
+      state:
+        subnetName: =value.name
+
+    - label: firewall
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-firewall
+      inputs:
+        metadata: =steps.config
+        networkName: =steps.network.name
+        subnet: =steps.subnet
