@@ -1,14 +1,7 @@
 apiVersion: acme.example.com/v1beta1
-kind: AwsEnvironment
+kind: GcpEnvironment
 metadata:
-  name: test-aws-environment
-  labels:
-    acme.example.com/business-unit: acme-bu
-    acme.example.com/product-line: acme-widgets
-    acme.example.com/domain: acme-domain
+  name: test-gcp-environment
 spec:
-  vpc:
-    publicSubnets:
-      - cidrBlock: 10.0.128.0/20
-        availabilityZone: us-east-1a
-        name: a-public
+  description: A test GCP environment
+  projectId: test-project
