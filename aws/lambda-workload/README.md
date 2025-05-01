@@ -58,7 +58,7 @@ kubectl apply -f ./src/crds/lambda-workload.yaml
 6. Install our Koreo Functions and Workflow
 
 ``` sh
-./scripts/install-koreo.sh ./src
+koreo apply ./src
 ```
 
 7. Trigger the workflow
