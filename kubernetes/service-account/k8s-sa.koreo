@@ -32,7 +32,7 @@ spec:
     inputs:
       metadata: =steps.config.metadata
     state:
-      ref: =resource.self_ref()
+      ref: =value.ref()
 
   - label: role
     ref:
