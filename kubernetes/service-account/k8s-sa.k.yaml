@@ -33,7 +33,7 @@ spec:
       metadata: =steps.config.metadata
     state:
       service_account:
-        ref: =value.ref()
+        ref: =value.ref
 
   - label: role
     ref:
