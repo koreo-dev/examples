@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: external-k8s
+  namespace: skybit-systems-dev
+spec:
+  serviceAccountName: dev-workload-ksa
+  containers:
+    - name: app
+      image: python:3.11
+      command: ["sleep", "infinity"]
+      env:
+        - name: GKE_CLUSTER_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: dev
+              key: endpoint
+        - name: GKE_CLUSTER_CA
+          valueFrom:
+            secretKeyRef:
+              name: dev
+              key: ca.crt

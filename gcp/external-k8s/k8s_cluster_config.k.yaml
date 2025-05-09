@@ -1,0 +1,21 @@
+---
+  apiVersion: koreo.dev/v1beta1
+  kind: ResourceFunction
+  metadata:
+    name: gcp-environment-k8s-cluster-config
+  spec:
+    apiConfig:
+      apiVersion: v1
+      kind: Secret
+      name: =inputs.metadata.name
+      namespace: =inputs.metadata.namespace
+  
+    resource:
+      type: Opaque
+      data:
+        endpoint: =b64encode(inputs.endpoint)
+        ca.crt: =b64encode(inputs.caCert)
+  
+    return:
+      name: =inputs.metadata.name
+  
