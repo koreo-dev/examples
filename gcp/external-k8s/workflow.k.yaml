@@ -1,0 +1,108 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: gcp-environment
+spec:
+  crdRef:
+    apiGroup: acme.example.com
+    version: v1beta1
+    kind: GcpEnvironment
+  steps:
+    - label: metadata
+      ref:
+        name: gcp-environment-metadata
+        kind: ValueFunction
+      inputs:
+        environmentResourceName: =parent.metadata.name
+        environmentNamespace: =parent.metadata.namespace
+
+    - label: network
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-network
+      inputs:
+        metadata: =steps.metadata
+      state:
+        networkName: =value.name
+
+    - label: subnet
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-subnet
+      inputs:
+        metadata: =steps.metadata
+        networkName: =steps.network.name
+        range: 10.10.0.0/16
+      state:
+        subnetName: =value.name
+
+    - label: firewall
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-firewall
+      inputs:
+        metadata: =steps.metadata
+        networkName: =steps.network.name
+        subnet: =steps.subnet
+
+    - label: k8sCluster
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-k8s-cluster
+      inputs:
+        metadata: =steps.metadata
+        networkName: =steps.network.name
+        subnetworkName: =steps.subnet.name
+      state:
+        k8sCluster: =value
+
+    - label: k8sClusterSecret
+      ref:
+        kind: ResourceFunction 
+        name: gcp-environment-k8s-cluster-config
+      inputs:
+        metadata: =steps.metadata
+        endpoint: =steps.k8sCluster.endpoint
+        caCert: =steps.k8sCluster.caCert
+
+    - label: workloadIdentityServiceAccount
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-iam-service-account
+      inputs:
+        metadata: =steps.metadata
+    - label: workloadIdentityPolicyMember
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-iam-policy-member
+      inputs:
+        metadata: =steps.metadata
+        saMember: =steps.workloadIdentityServiceAccount.member
+        projectId: =parent.spec.projectId
+
+    - label: ksaServiceAccount
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-k8s-service-account
+      inputs:
+        metadata: =steps.metadata
+        saName: =steps.workloadIdentityServiceAccount.name
+        projectId: =parent.spec.projectId
+
+    - label: workloadIdentityPolicyMemberIdentKSA
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-iam-policy-member-ident-ksa
+      inputs:
+        metadata: =steps.metadata
+        saName: =steps.workloadIdentityServiceAccount.name
+        ksaName: =steps.ksaServiceAccount.name
+
+    - label: workloadIdentityPolicyMemberTokenKSA
+      ref:
+        kind: ResourceFunction
+        name: gcp-environment-iam-policy-member-token-ksa
+      inputs:
+        metadata: =steps.metadata
+        saName: =steps.workloadIdentityServiceAccount.name
+        ksaName: =steps.ksaServiceAccount.name

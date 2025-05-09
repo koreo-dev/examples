@@ -1,0 +1,72 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+    name: gcp-environment-firewall
+spec:
+  apiConfig:
+    apiVersion: compute.cnrm.cloud.google.com/v1beta1
+    kind: ComputeFirewall
+    name: =inputs.metadata.name
+    namespace: =inputs.metadata.namespace
+
+  resource:
+    spec:
+      networkRef:
+        name: =inputs.networkName
+      allow:
+        - protocol: tcp
+          ports: ["0-65535"]
+        - protocol: udp 
+          ports: ["0-65535"]
+        - protocol: icmp
+      sourceRanges: 
+        - =inputs.subnet.range
+      direction: INGRESS
+    
+  postconditions:
+    - assert: =resource.config_connect_ready()
+      retry:
+        message: Waiting for firewall to be created
+        delay: 10
+    
+  return:
+    name: =inputs.metadata.name
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+    name: gcp-environment-firewall-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: gcp-environment-firewall
+
+  inputs:
+    networkName: test-network-name
+    metadata:
+      name: test-network
+      namespace: test-namespace
+    subnet:
+      name: subnet1
+      range: 10.0.0.0/20
+    
+  testCases:
+    - expectResource:
+        apiVersion: compute.cnrm.cloud.google.com/v1beta1
+        kind: ComputeFirewall
+        metadata:
+          name: test-network
+          namespace: test-namespace
+        spec:
+          allow:
+            - protocol: tcp
+              ports: ["0-65535"]
+            - protocol: udp 
+              ports: ["0-65535"]
+            - protocol: icmp
+          sourceRanges:
+            - 10.0.0.0/20
+          direction: INGRESS
+          networkRef: 
+            name: test-network-name
