@@ -1,0 +1,68 @@
+---
+  apiVersion: koreo.dev/v1beta1
+  kind: ResourceFunction
+  metadata:
+    name: federated-k8s-cluster
+  spec:
+    apiConfig:
+      apiVersion: container.cnrm.cloud.google.com/v1beta1
+      kind: ContainerCluster
+      name: =inputs.metadata.name
+      namespace: =inputs.metadata.namespace
+  
+    resource:
+      spec:
+        description: A large regional VPC-native cluster set up with special networking considerations.
+        location: us-central1
+        initialNodeCount: 1
+        defaultMaxPodsPerNode: 16
+        nodeLocations:
+          - us-central1-a
+          - us-central1-b
+          - us-central1-c
+          - us-central1-f
+        workloadIdentityConfig:
+          workloadPool: skybit-systems.svc.id.goog
+        networkingMode: VPC_NATIVE
+        networkRef:
+          name: =inputs.networkName
+        subnetworkRef:
+          name: =inputs.subnetworkName
+        ipAllocationPolicy:
+          servicesSecondaryRangeName: servicesrange
+          clusterSecondaryRangeName: clusterrange
+        clusterAutoscaling:
+          enabled: true
+          autoscalingProfile: BALANCED
+          resourceLimits:
+          - resourceType: cpu
+            maximum: 100
+            minimum: 10
+          - resourceType: memory
+            maximum: 1000
+            minimum: 100
+        maintenancePolicy:
+          dailyMaintenanceWindow:
+            startTime: 00:00
+        releaseChannel:
+          channel: STABLE
+        enableBinaryAuthorization: true
+        enableIntranodeVisibility: true
+        enableShieldedNodes: true
+        addonsConfig:
+          networkPolicyConfig:
+            disabled: false
+        networkPolicy:
+          enabled: true
+        podSecurityPolicyConfig:
+          enabled: true
+          
+    postconditions:
+      - assert: =resource.config_connect_ready()
+        retry:
+          message: Waiting for GKE Cluster to be created
+          delay: 30
+  
+    return:
+      endpoint: ="https://" + resource.status.observedState.privateClusterConfig.publicEndpoint
+      caCert: =resource.status.observedState.masterAuth.clusterCaCertificate

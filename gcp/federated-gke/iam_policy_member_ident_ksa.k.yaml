@@ -1,0 +1,29 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: federated-iam-policy-member-ident-ksa
+spec:
+  locals:
+    name: =inputs.metadata.name + "-ksa-ident-user"
+  apiConfig:
+    apiVersion: iam.cnrm.cloud.google.com/v1beta1
+    kind: IAMPolicyMember
+    name: =locals.name
+    namespace: =inputs.metadata.namespace
+
+  resource:
+    spec:
+      member: ="serviceAccount:" + inputs.projectId + ".svc.id.goog[" + inputs.metadata.namespace + "/" + inputs.ksaName + "]"
+      role: roles/iam.workloadIdentityUser
+      resourceRef:
+        kind: IAMServiceAccount
+        name: =inputs.saName
+  postconditions:
+    - assert: =resource.config_connect_ready()
+      retry:
+        message: Waiting for identity policy member to be created
+        delay: 10
+
+  return:
+    name: =locals.name

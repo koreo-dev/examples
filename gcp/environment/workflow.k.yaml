@@ -4,26 +4,25 @@ metadata:
   name: gcp-environment
 spec:
   crdRef:
-    apiGroup: acme.example.com
-    kind: GcpEnvironment
+    apiGroup: example.koreo.dev
     version: v1beta1
-
+    kind: GcpEnvironment
+    
   steps:
-    - label: config
+    - label: metadata
       ref:
+        name: gcp-environment-metadata
         kind: ValueFunction
-        name: gcp-environment-config
       inputs:
-        parent: =parent
-      state:
-        projectId: =value.projectId
+        environmentResourceName: =parent.metadata.name
+        environmentNamespace: =parent.metadata.namespace
 
     - label: network
       ref:
         kind: ResourceFunction
         name: gcp-environment-network
       inputs:
-        metadata: =steps.config
+        metadata: =steps.metadata
       state:
         networkName: =value.name
 
@@ -32,7 +31,7 @@ spec:
         kind: ResourceFunction
         name: gcp-environment-subnet
       inputs:
-        metadata: =steps.config
+        metadata: =steps.metadata
         networkName: =steps.network.name
         range: 10.10.0.0/16
       state:
@@ -43,6 +42,6 @@ spec:
         kind: ResourceFunction
         name: gcp-environment-firewall
       inputs:
-        metadata: =steps.config
+        metadata: =steps.metadata
         networkName: =steps.network.name
         subnet: =steps.subnet

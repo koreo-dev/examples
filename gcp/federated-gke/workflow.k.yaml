@@ -1,0 +1,83 @@
+apiVersion: koreo.dev/v1beta1
+kind: Workflow
+metadata:
+  name: federated-gke
+spec:
+  crdRef:
+    apiGroup: example.koreo.dev
+    version: v1beta1
+    kind: FederatedGKE
+    
+  steps:
+    - label: metadata
+      ref:
+        name: federated-metadata
+        kind: ValueFunction
+      inputs:
+        clusterResourceName: =parent.metadata.name
+        clusterNamespace: =parent.metadata.namespace
+
+    - label: k8sCluster
+      ref:
+        kind: ResourceFunction
+        name: federated-k8s-cluster
+      inputs:
+        metadata: =steps.metadata
+        networkName: =parent.networkName
+        subnetworkName: =parent.subnetworkName
+      state:
+        k8sCluster: =value
+
+    - label: k8sClusterSecret
+      ref:
+        kind: ResourceFunction 
+        name: federated-k8s-cluster-secret
+      inputs:
+        metadata: =steps.metadata
+        endpoint: =steps.k8sCluster.endpoint
+        caCert: =steps.k8sCluster.caCert
+
+    - label: workloadIdentityServiceAccount
+      ref:
+        kind: ResourceFunction
+        name: federated-iam-service-account
+      inputs:
+        metadata: =steps.metadata
+
+    - label: workloadIdentityPolicyMember
+      ref:
+        kind: ResourceFunction
+        name: federated-iam-policy-member
+      inputs:
+        metadata: =steps.metadata
+        saMember: =steps.workloadIdentityServiceAccount.member
+        projectId: =parent.spec.projectId
+
+    - label: ksaServiceAccount
+      ref:
+        kind: ResourceFunction
+        name: federated-k8s-service-account
+      inputs:
+        metadata: =steps.metadata
+        saName: =steps.workloadIdentityServiceAccount.name
+        projectId: =parent.spec.projectId
+
+    - label: workloadIdentityPolicyMemberIdentKSA
+      ref:
+        kind: ResourceFunction
+        name: federated-iam-policy-member-ident-ksa
+      inputs:
+        metadata: =steps.metadata
+        saName: =steps.workloadIdentityServiceAccount.name
+        ksaName: =steps.ksaServiceAccount.name
+        projectId: =parent.spec.projectId
+
+    - label: workloadIdentityPolicyMemberTokenKSA
+      ref:
+        kind: ResourceFunction
+        name: federated-iam-policy-member-token-ksa
+      inputs:
+        metadata: =steps.metadata
+        saName: =steps.workloadIdentityServiceAccount.name
+        ksaName: =steps.ksaServiceAccount.name
+        projectId: =parent.spec.projectId

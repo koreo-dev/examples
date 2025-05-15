@@ -1,7 +1,0 @@
-apiVersion: acme.example.com/v1beta1
-kind: GcpEnvironment
-metadata:
-  name: test-gcp-environment
-spec:
-  description: A test GCP environment
-  projectId: test-project

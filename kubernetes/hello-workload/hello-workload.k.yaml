@@ -22,7 +22,7 @@ spec:
       condition:
         type: Deployment
         name: Workload Deployment
-        
+
     - label: create_service
       ref:
         kind: ResourceFunction

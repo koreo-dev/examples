@@ -1,0 +1,7 @@
+---
+apiVersion: example.koreo.dev/v1
+kind: GcpEnvironment
+metadata:
+  name: my-environment
+spec:
+  description: My GCP environment

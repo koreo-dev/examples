@@ -1,0 +1,69 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ResourceFunction
+metadata:
+  name: gcp-environment-subnet
+spec:
+  apiConfig:
+    apiVersion: compute.cnrm.cloud.google.com/v1beta1
+    kind: ComputeSubnetwork
+    name: =inputs.metadata.name
+    namespace: =inputs.metadata.namespace
+
+  resource:
+    spec:
+      networkRef:
+        name: =inputs.networkName
+      region: us-central1
+      ipCidrRange: =inputs.range
+      secondaryIpRange:
+        - rangeName: servicesrange
+          ipCidrRange: =inputs.servicesRange
+        - rangeName: clusterrange
+          ipCidrRange: =inputs.clusterRange
+    
+  postconditions:
+    - assert: =resource.config_connect_ready()
+      retry:
+        message: Waiting for subnetwork to be created
+        delay: 10
+    
+  return:
+    name: =inputs.metadata.name
+    range: =inputs.range
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: gcp-environment-subnet-test
+spec:
+  functionRef:
+    kind: ResourceFunction
+    name: gcp-environment-subnet
+
+  inputs:
+    range: 10.0.0.0/16
+    servicesRange: 10.11.0.0/16
+    clusterRange: 10.12.0.0/16
+    networkName: test-network-name
+    metadata:
+      name: test-network
+      namespace: test-namespace
+    
+  testCases:
+    - expectResource:
+        apiVersion: compute.cnrm.cloud.google.com/v1beta1
+        kind: ComputeSubnetwork
+        metadata:
+          name: test-network
+          namespace: test-namespace
+        spec:
+          region: us-central1
+          ipCidrRange: 10.0.0.0/16
+          networkRef: 
+            name: test-network-name
+          secondaryIpRange:
+            - rangeName: servicesrange
+              ipCidrRange: 10.11.0.0/16
+            - rangeName: clusterrange
+              ipCidrRange: 10.12.0.0/16

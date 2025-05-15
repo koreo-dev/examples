@@ -1,3 +1,4 @@
+---
 apiVersion: koreo.dev/v1beta1
 kind: ResourceFunction
 metadata:
@@ -11,26 +12,24 @@ spec:
 
   resource:
     spec:
-      allow:
-        - ports:
-            - 0-65535
-          protocol: tcp
-        - ports:
-            - 0-65535
-          protocol: udp
-        - protocol: icmp
-      direction: INGRESS
       networkRef:
         name: =inputs.networkName
-      sourceRanges:
+      allow:
+        - protocol: tcp
+          ports: ["0-65535"]
+        - protocol: udp 
+          ports: ["0-65535"]
+        - protocol: icmp
+      sourceRanges: 
         - =inputs.subnet.range
-
+      direction: INGRESS
+    
   postconditions:
     - assert: =resource.config_connect_ready()
       retry:
-        delay: 10
         message: Waiting for firewall to be created
-
+        delay: 10
+    
   return:
     name: =inputs.metadata.name
 ---
@@ -44,32 +43,30 @@ spec:
     name: gcp-environment-firewall
 
   inputs:
+    networkName: test-network-name
     metadata:
       name: test-network
       namespace: test-namespace
-    networkName: test-network-name
     subnet:
       name: subnet1
       range: 10.0.0.0/20
-
+    
   testCases:
-  - expectResource:
-      apiVersion: compute.cnrm.cloud.google.com/v1beta1
-      kind: ComputeFirewall
-      metadata:
-        name: test-network
-        namespace: test-namespace
-      spec:
-        allow:
-        - ports:
-          - 0-65535
-          protocol: tcp
-        - ports:
-          - 0-65535
-          protocol: udp
-        - protocol: icmp
-        direction: INGRESS
-        networkRef:
-          name: test-network-name
-        sourceRanges:
-        - 10.0.0.0/20
+    - expectResource:
+        apiVersion: compute.cnrm.cloud.google.com/v1beta1
+        kind: ComputeFirewall
+        metadata:
+          name: test-network
+          namespace: test-namespace
+        spec:
+          allow:
+            - protocol: tcp
+              ports: ["0-65535"]
+            - protocol: udp 
+              ports: ["0-65535"]
+            - protocol: icmp
+          sourceRanges:
+            - 10.0.0.0/20
+          direction: INGRESS
+          networkRef: 
+            name: test-network-name

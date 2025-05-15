@@ -1,3 +1,4 @@
+---
 apiVersion: koreo.dev/v1beta1
 kind: ResourceFunction
 metadata:
@@ -11,18 +12,19 @@ spec:
 
   resource:
     spec:
+      routingMode: REGIONAL
       autoCreateSubnetworks: false
       enableUlaInternalIpv6: false
-      routingMode: REGIONAL
-
+  
   postconditions:
     - assert: =resource.config_connect_ready()
       retry:
-        delay: 10
         message: Waiting for compute network to be created
-
+        delay: 10
+  
   return:
     name: =inputs.metadata.name
+
 ---
 apiVersion: koreo.dev/v1beta1
 kind: FunctionTest
@@ -37,15 +39,15 @@ spec:
     metadata:
       name: test-network
       namespace: test-namespace
-
+  
   testCases:
-  - expectResource:
-      apiVersion: compute.cnrm.cloud.google.com/v1beta1
-      kind: ComputeNetwork
-      metadata:
-        name: test-network
-        namespace: test-namespace
-      spec:
-        autoCreateSubnetworks: false
-        enableUlaInternalIpv6: false
-        routingMode: REGIONAL
+    - expectResource:
+        apiVersion: compute.cnrm.cloud.google.com/v1beta1
+        kind: ComputeNetwork
+        metadata:
+          name: test-network
+          namespace: test-namespace
+        spec:
+          routingMode: REGIONAL
+          autoCreateSubnetworks: false
+          enableUlaInternalIpv6: false

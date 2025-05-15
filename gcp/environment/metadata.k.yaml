@@ -1,0 +1,26 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: gcp-environment-metadata
+spec:
+  return:
+    name: =inputs.environmentResourceName
+    namespace: =inputs.environmentNamespace
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: gcp-environment-metadata-test
+spec:
+  functionRef:
+    name: gcp-environment-metadata
+    kind: ValueFunction
+  inputs:
+    environmentResourceName: example-test
+    environmentNamespace: example-ns
+  testCases:
+    - expectReturn:
+        name: example-test
+        namespace: example-ns
+    
