@@ -2,7 +2,7 @@
   apiVersion: koreo.dev/v1beta1
   kind: ResourceFunction
   metadata:
-    name: gcp-environment-k8s-cluster
+    name: federated-k8s-cluster
   spec:
     apiConfig:
       apiVersion: container.cnrm.cloud.google.com/v1beta1

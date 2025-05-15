@@ -1,4 +1,4 @@
-# GCP Environment Workflow
+# Federated GKE Workflow
 
 This workflow provisions and configures a complete GCP-based Kubernetes environment using the `koreo.dev` workflow engine and custom `ResourceFunction` and `ValueFunction` modules.
 
@@ -6,8 +6,8 @@ It creates the necessary network infrastructure, a GKE cluster, service accounts
 
 ## Overview
 
-- **CRD Reference**: Targets the `GcpEnvironment` CRD defined under `acme.example.com/v1beta1`.
-- **Inputs**: Expects a `parent` object.
+- **CRD Reference**: Targets the `FederatedGKE` CRD defined under `example.koreo.dev/v1beta1`.
+- **Inputs**: Expects a `parent` object, that has a networkName, subnetworkName, and projectId input.
 - **Output**: A fully provisioned Kubernetes cluster with Workload Identity configured.
 
 ## Workflow Steps
@@ -15,9 +15,6 @@ It creates the necessary network infrastructure, a GKE cluster, service accounts
 | Step | Description |
 |------|-------------|
 | `metadata` | Generates standard metadata used across all resources. |
-| `network` | Creates a VPC network for the environment. |
-| `subnet` | Provisions a subnet within the created VPC with CIDR `10.10.0.0/16`. |
-| `firewall` | Configures firewall rules for the subnet. |
 | `k8sCluster` | Provisions a GKE cluster using the created VPC and subnet. |
 | `k8sClusterSecret` | Extracts the Kubernetes API endpoint and CA cert to create a Kubernetes config secret. |
 | `workloadIdentityServiceAccount` | Creates a GCP IAM Service Account used for Workload Identity. |
@@ -37,7 +34,6 @@ It creates the necessary network infrastructure, a GKE cluster, service accounts
 - The workflow uses [Google Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) to enable secure communication between GCP and Kubernetes workloads.
 - Each resource function should be implemented to create or reconcile its respective GCP or K8s object.
 - The `metadata` step centralizes naming and labeling to ensure consistent tagging and traceability.
-
 
 ### Notes
 - Ensure Koreo service account has permissions to edit IAM policy
@@ -69,10 +65,10 @@ gcloud iam service-accounts add-iam-policy-binding \
 
 ``` sh
 # Edit serviceAccountName to koreo or whatever the workflow generates ("<GcpEnvironmentName>-workload-ksa")
-# Edit the secret name references to the GcpEnvironmentName
-kubectl apply -f ./fixtures/k8s-external-test.yaml
+# Edit the secret name references to the FederatedGKE instance name
+kubectl apply -f ./fixtures/validation-pod.yaml
 
-kubectl exec -it -n <TARGET_K8S_NAMESPACE> external-k8s -- /bin/sh
+kubectl exec -it -n <TARGET_K8S_NAMESPACE> federated-k8s -- /bin/sh
 
 $ pip install pykube-ng google-auth
 $ python

@@ -15,21 +15,21 @@ spec:
         name: deployment-factory
       inputs:
         name: =parent.metadata.name
-        namespace: =parent.metadata.namespace
+        namespace: "default"
         env: =parent.spec.environment
         image: =parent.spec.container.image
         port: =parent.spec.container.port
       condition:
         type: Deployment
         name: Workload Deployment
-        
+
     - label: create_service
       ref:
         kind: ResourceFunction
         name: service-factory.v2
       inputs:
         name: =parent.metadata.name
-        namespace: =parent.metadata.namespace
+        namespace: "default"
         env: =parent.spec.environment
         targetPort: =parent.spec.container.port
       condition:

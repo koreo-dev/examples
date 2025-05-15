@@ -1,0 +1,25 @@
+---
+apiVersion: koreo.dev/v1beta1
+kind: ValueFunction
+metadata:
+  name: federated-metadata
+spec:
+  return:
+    name: =inputs.clusterResourceName
+    namespace: =inputs.clusterNamespace
+---
+apiVersion: koreo.dev/v1beta1
+kind: FunctionTest
+metadata:
+  name: federated-metadata-test
+spec:
+  functionRef:
+    name: federated-metadata
+    kind: ValueFunction
+  inputs:
+    clusterResourceName: example-test
+    clusterNamespace: example-ns
+  testCases:
+    - expectReturn:
+        name: example-test
+        namespace: example-ns

@@ -2,7 +2,7 @@
 apiVersion: koreo.dev/v1beta1
 kind: ResourceFunction
 metadata:
-  name: gcp-environment-iam-policy-member-ident-ksa
+  name: federated-iam-policy-member-ident-ksa
 spec:
   locals:
     name: =inputs.metadata.name + "-ksa-ident-user"
@@ -14,7 +14,7 @@ spec:
 
   resource:
     spec:
-      member: ="serviceAccount:konfig-platform.svc.id.goog[" + inputs.metadata.namespace + "/" + inputs.ksaName + "]"
+      member: ="serviceAccount:" + inputs.projectId + ".svc.id.goog[" + inputs.metadata.namespace + "/" + inputs.ksaName + "]"
       role: roles/iam.workloadIdentityUser
       resourceRef:
         kind: IAMServiceAccount

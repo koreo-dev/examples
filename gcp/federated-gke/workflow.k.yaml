@@ -1,65 +1,37 @@
 apiVersion: koreo.dev/v1beta1
 kind: Workflow
 metadata:
-  name: gcp-environment
+  name: federated-gke
 spec:
   crdRef:
-    apiGroup: acme.example.com
+    apiGroup: example.koreo.dev
     version: v1beta1
-    kind: GcpEnvironment
+    kind: FederatedGKE
+    
   steps:
     - label: metadata
       ref:
-        name: gcp-environment-metadata
+        name: federated-metadata
         kind: ValueFunction
       inputs:
-        environmentResourceName: =parent.metadata.name
-        environmentNamespace: =parent.metadata.namespace
-
-    - label: network
-      ref:
-        kind: ResourceFunction
-        name: gcp-environment-network
-      inputs:
-        metadata: =steps.metadata
-      state:
-        networkName: =value.name
-
-    - label: subnet
-      ref:
-        kind: ResourceFunction
-        name: gcp-environment-subnet
-      inputs:
-        metadata: =steps.metadata
-        networkName: =steps.network.name
-        range: 10.10.0.0/16
-      state:
-        subnetName: =value.name
-
-    - label: firewall
-      ref:
-        kind: ResourceFunction
-        name: gcp-environment-firewall
-      inputs:
-        metadata: =steps.metadata
-        networkName: =steps.network.name
-        subnet: =steps.subnet
+        clusterResourceName: =parent.metadata.name
+        clusterNamespace: =parent.metadata.namespace
 
     - label: k8sCluster
       ref:
         kind: ResourceFunction
-        name: gcp-environment-k8s-cluster
+        name: federated-k8s-cluster
       inputs:
         metadata: =steps.metadata
-        networkName: =steps.network.name
-        subnetworkName: =steps.subnet.name
+        networkName: =parent.networkName
+        subnetworkName: =parent.subnetworkName
       state:
         k8sCluster: =value
 
     - label: k8sClusterSecret
       ref:
         kind: ResourceFunction 
-        name: gcp-environment-k8s-cluster-config
+        name: federated-k8s-cluster-secret
       inputs:
         metadata: =steps.metadata
         endpoint: =steps.k8sCluster.endpoint
@@ -68,13 +40,14 @@ spec:
     - label: workloadIdentityServiceAccount
       ref:
         kind: ResourceFunction
-        name: gcp-environment-iam-service-account
+        name: federated-iam-service-account
       inputs:
         metadata: =steps.metadata
+
     - label: workloadIdentityPolicyMember
       ref:
         kind: ResourceFunction
-        name: gcp-environment-iam-policy-member
+        name: federated-iam-policy-member
       inputs:
         metadata: =steps.metadata
         saMember: =steps.workloadIdentityServiceAccount.member
@@ -83,7 +56,7 @@ spec:
     - label: ksaServiceAccount
       ref:
         kind: ResourceFunction
-        name: gcp-environment-k8s-service-account
+        name: federated-k8s-service-account
       inputs:
         metadata: =steps.metadata
         saName: =steps.workloadIdentityServiceAccount.name
@@ -92,17 +65,19 @@ spec:
     - label: workloadIdentityPolicyMemberIdentKSA
       ref:
         kind: ResourceFunction
-        name: gcp-environment-iam-policy-member-ident-ksa
+        name: federated-iam-policy-member-ident-ksa
       inputs:
         metadata: =steps.metadata
         saName: =steps.workloadIdentityServiceAccount.name
         ksaName: =steps.ksaServiceAccount.name
+        projectId: =parent.spec.projectId
 
     - label: workloadIdentityPolicyMemberTokenKSA
       ref:
         kind: ResourceFunction
-        name: gcp-environment-iam-policy-member-token-ksa
+        name: federated-iam-policy-member-token-ksa
       inputs:
         metadata: =steps.metadata
         saName: =steps.workloadIdentityServiceAccount.name
         ksaName: =steps.ksaServiceAccount.name
+        projectId: =parent.spec.projectId

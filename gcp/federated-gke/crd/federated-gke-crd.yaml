@@ -1,14 +1,14 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: gcpenvironments.acme.example.com
+  name: federatedgke.example.koreo.dev
 spec:
   scope: Namespaced
   group: acme.example.com
   names:
-    kind: GcpEnvironment
-    plural: gcpenvironments
-    singular: gcpenvironment
+    kind: FederatedGKE
+    plural: federatedgkes
+    singular: federatedgke
   versions:
     - name: v1beta1
       served: true
@@ -31,6 +31,12 @@ spec:
                 description:
                   description: The description of the environment
                   nullable: true
+                  type: string
+                subnetworkName:
+                  description: The gcp subnetwork name to use for the cluster
+                  type: string
+                networkName:
+                  description: The gcp network name to use for the cluster
                   type: string
                 projectId:
                   description: The gcp project id

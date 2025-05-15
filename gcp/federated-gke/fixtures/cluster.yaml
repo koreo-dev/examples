@@ -1,0 +1,9 @@
+---
+apiVersion: example.koreo.dev/v1
+kind: FederatedGke
+metadata:
+  name: my-cluster
+spec:
+  projectId: my-project-id
+  networkName: my-network
+  subnetworkName: my-subnetwork

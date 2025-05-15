@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: external-k8s
+  name: federated-k8s
 spec:
-  serviceAccountName: dev-workload-ksa
+  serviceAccountName: dev-workload-ksa # This is the name of the KSA created by the federated-k8s-service-account function
   containers:
     - name: app
       image: python:3.11

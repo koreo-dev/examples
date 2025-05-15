@@ -2,7 +2,7 @@
 apiVersion: koreo.dev/v1beta1
 kind: ResourceFunction
 metadata:
-  name: gcp-environment-iam-policy-member
+  name: federated-iam-policy-member
 spec:
   locals:
     name: =inputs.metadata.name + "-workload-identity"
@@ -19,6 +19,7 @@ spec:
       resourceRef:
         kind: Project
         external: ="projects/" + inputs.projectId
+        
   postconditions:
     - assert: =resource.config_connect_ready()
       retry:
