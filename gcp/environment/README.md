@@ -1,8 +1,8 @@
 # GCP Environment Workflow
 
-This workflow provisions and configures a complete GCP-based Kubernetes environment using the `koreo.dev` workflow engine and custom `ResourceFunction` and `ValueFunction` modules.
+This workflow provisions and configures a GCP-based environment using the `koreo.dev` workflow engine and custom `ResourceFunction` and `ValueFunction` modules.
 
-It creates an example vpc and subnet with a firewall.
+Included in the environment are a VPC, Subnet, and Firewall.
 
 ## Overview
 

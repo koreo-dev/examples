@@ -1,8 +1,10 @@
 # Federated GKE Workflow
 
-This workflow provisions and configures a complete GCP-based Kubernetes environment using the `koreo.dev` workflow engine and custom `ResourceFunction` and `ValueFunction` modules.
+This workflow provisions and configures a complete Kubernetes cluster in another project and creates 
+a k8s service account in the Koreo Cluster with `roles/container.developer` access to it
+using the `koreo.dev` workflow engine and custom `ResourceFunction` and `ValueFunction` modules. 
 
-It creates the necessary network infrastructure, a GKE cluster, service accounts, and sets up Workload Identity to allow Kubernetes ServiceAccounts to impersonate GCP Service Accounts securely.
+The workflow creates a GKE cluster, necessary IAM and K8s service accounts, sets up Workload Identity to allow Kubernetes ServiceAccounts to impersonate GCP Service Accounts securely.
 
 ## Overview
 
@@ -29,19 +31,18 @@ It creates the necessary network infrastructure, a GKE cluster, service accounts
 - Koreo engine with support for `ResourceFunction` and `ValueFunction`.
 - IAM permissions to create networks, clusters, service accounts, and IAM policies.
 
-## Notes
+## Federated Koreo
 
-- The workflow uses [Google Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) to enable secure communication between GCP and Kubernetes workloads.
-- Each resource function should be implemented to create or reconcile its respective GCP or K8s object.
-- The `metadata` step centralizes naming and labeling to ensure consistent tagging and traceability.
+- To have a subsequent Koreo install use the created k8s service account and manage resources in it, you will need edit the above workflow to use the service account created in the `federated-k8s-service-account` step or run the following commands or edit the koreo service account name.
 
-### Notes
+## Debug Sanity Check
+
 - Ensure Koreo service account has permissions to edit IAM policy
   - I made it owner of the account, but this could be restricted I am sure.
 - Ensure Identity and Access Management API is enabled
 - Ensure Kubernetes API is enabled
 - Ensure Cloud Resource Manager API is enabled
-- To get the `koreo` service account you will need edit the above workflow to use the koreo service account or run the following commands.
+
 
 ``` sh
 gcloud projects add-iam-policy-binding <TARGET_K8S_PROJECT_ID> \
@@ -62,6 +63,8 @@ gcloud iam service-accounts add-iam-policy-binding \
   --role "roles/iam.serviceAccountTokenCreator" \
   --member "serviceAccount:<HOST_K8S_PROJECT_ID>.svc.id.goog[<HOST_K8s_NAMESPACE>/koreo]"
 ```
+
+### Validate Service Account
 
 ``` sh
 # Edit serviceAccountName to koreo or whatever the workflow generates ("<GcpEnvironmentName>-workload-ksa")
