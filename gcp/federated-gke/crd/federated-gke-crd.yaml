@@ -4,7 +4,7 @@ metadata:
   name: federatedgke.example.koreo.dev
 spec:
   scope: Namespaced
-  group: acme.example.com
+  group: example.koreo.dev
   names:
     kind: FederatedGKE
     plural: federatedgkes
