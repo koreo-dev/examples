@@ -15,7 +15,6 @@ spec:
       routingMode: REGIONAL
       autoCreateSubnetworks: false
       enableUlaInternalIpv6: false
-
   
   postconditions:
     - assert: =resource.config_connect_ready()

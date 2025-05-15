@@ -2,7 +2,7 @@
 apiVersion: koreo.dev/v1beta1
 kind: ResourceFunction
 metadata:
-    name: gcp-environment-subnet
+  name: gcp-environment-subnet
 spec:
   apiConfig:
     apiVersion: compute.cnrm.cloud.google.com/v1beta1
@@ -35,7 +35,7 @@ spec:
 apiVersion: koreo.dev/v1beta1
 kind: FunctionTest
 metadata:
-    name: gcp-environment-subnet-test
+  name: gcp-environment-subnet-test
 spec:
   functionRef:
     kind: ResourceFunction

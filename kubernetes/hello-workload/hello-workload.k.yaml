@@ -15,7 +15,7 @@ spec:
         name: deployment-factory
       inputs:
         name: =parent.metadata.name
-        namespace: "default"
+        namespace: =parent.metadata.namespace
         env: =parent.spec.environment
         image: =parent.spec.container.image
         port: =parent.spec.container.port
@@ -29,7 +29,7 @@ spec:
         name: service-factory.v2
       inputs:
         name: =parent.metadata.name
-        namespace: "default"
+        namespace: =parent.metadata.namespace
         env: =parent.spec.environment
         targetPort: =parent.spec.container.port
       condition:
